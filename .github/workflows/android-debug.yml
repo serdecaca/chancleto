@@ -1,6 +1,3 @@
-  name: Generar Gradle Wrapper
-  run: gradle wrapper
-  
   name: Build Release APK
 
 on:
