@@ -1,4 +1,4 @@
-  name: Build Release APK
+name: Build Debug APK
 
 on:
   push:
@@ -17,20 +17,19 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Decode Keystore
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/my-release-key.jks
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
-      - name: Build Release APK
-        run: |
-          ./gradlew assembleRelease \
-          -Pandroid.injected.signing.store.file=$PWD/app/my-release-key.jks \
-          -Pandroid.injected.signing.store.password=${{ secrets.KEY_STORE_PASSWORD }} \
-          -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
-          -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+      # --- PASO NUEVO ---
+      - name: Generar Gradle Wrapper
+        run: gradle wrapper
+      # ------------------
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
-          path: app/build/outputs/apk/release/*.apk
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
