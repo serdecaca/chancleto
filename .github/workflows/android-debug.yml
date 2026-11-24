@@ -1,4 +1,7 @@
-name: Build Release APK
+  name: Generar Gradle Wrapper
+  run: gradle wrapper
+  
+  name: Build Release APK
 
 on:
   push:
