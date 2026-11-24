@@ -2,7 +2,11 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#09090e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>MERCADONA RAGE '89: EL TERROR DE LA COMPRA (EDICIÓN PRO)</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -25,41 +29,49 @@
     --arcade-gold: #ffd100;
   }
 
-  body {
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Sin scroll, pantalla completa */
     background-color: var(--bg-dark);
     background-image: radial-gradient(circle at 50% 20%, #19221d 0%, #09090e 70%);
     color: #fff;
     font-family: 'Press Start 2P', monospace;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    min-height: 100vh;
-    padding: 8px;
-    overflow-x: hidden;
     touch-action: manipulation;
   }
 
-  #game-wrapper {
-    width: 100%;
-    max-width: 1020px;
+  body {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 8px;
+    align-items: stretch;
+    justify-content: stretch;
+  }
+
+  #game-wrapper {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh; /* Altura dinámica en móviles */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: stretch;
+    gap: 0;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
   }
 
   #arcade-cabinet {
     position: relative;
     width: 100%;
-    aspect-ratio: 16 / 9;
+    height: 100%;
+    flex: 1 1 auto;
     background: #000;
-    border: 4px solid #2e2e42;
-    border-radius: 12px;
-    box-shadow:
-      0 0 36px rgba(0, 166, 81, 0.32),
-      0 0 14px rgba(243, 112, 33, 0.22),
-      inset 0 0 24px rgba(0, 0, 0, 0.92);
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
     overflow: hidden;
   }
 
@@ -67,8 +79,10 @@
     display: block;
     width: 100%;
     height: 100%;
+    object-fit: contain; /* Mantiene la proporción y muestra todo el escenario */
     image-rendering: pixelated;
     image-rendering: crisp-edges;
+    background: #000;
   }
 
   /* Scanlines sutiles CRT */
@@ -84,50 +98,55 @@
     z-index: 5;
   }
 
+  /* Barra de UI superior: flota sobre el juego, semi-transparente y compacta */
   #ui-bar {
-    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 12px;
-    background: var(--panel-bg);
-    border: 2px solid var(--panel-border);
-    border-radius: 10px;
+    padding: 4px 8px;
+    background: rgba(20, 20, 29, 0.55);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     font-size: 9px;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
+    pointer-events: auto;
   }
 
   .btn-arcade {
-    background: linear-gradient(180deg, #00b85c 0%, #006b34 100%);
+    background: rgba(0, 166, 81, 0.75);
     color: #fff;
-    border: 2px solid var(--merc-orange);
-    border-radius: 6px;
-    padding: 7px 10px;
+    border: 1px solid var(--merc-orange);
+    border-radius: 5px;
+    padding: 5px 7px;
     font-family: 'Press Start 2P', monospace;
-    font-size: 8.5px;
+    font-size: 7.5px;
     cursor: pointer;
-    box-shadow: 0 3px 0 #00391c;
     transition: transform 0.08s, filter 0.12s;
     touch-action: manipulation;
+    backdrop-filter: blur(2px);
   }
 
   .btn-arcade:hover {
-    filter: brightness(1.08);
+    filter: brightness(1.1);
   }
 
   .btn-arcade:active {
     transform: translateY(2px);
-    box-shadow: 0 1px 0 #00391c;
+    filter: brightness(0.9);
   }
 
   .btn-apk {
-    background: linear-gradient(180deg, #f37021 0%, #b84306 100%);
+    background: rgba(243, 112, 33, 0.8);
     border-color: var(--arcade-gold);
-    box-shadow: 0 3px 0 #5c1f02;
   }
 
   .controls-legend {
+    display: none; /* Oculto en móvil para no tapar el juego */
     color: #c5cedb;
     line-height: 1.65;
   }
@@ -140,23 +159,31 @@
     border: 1px solid #484863;
   }
 
-  /* Controles táctiles optimizados para Android */
+  /* Controles táctiles: flotan SOBRE la parte inferior del juego, semi-transparentes */
   #touch-controls {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 25;
     display: none;
-    width: 100%;
     justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background: rgba(20, 20, 29, 0.92);
-    border: 2px solid var(--panel-border);
-    border-radius: 12px;
-    gap: 12px;
+    align-items: flex-end;
+    padding: 6px 10px 8px;
+    background: linear-gradient(to top, rgba(10, 10, 15, 0.55), rgba(10, 10, 15, 0.0));
+    gap: 8px;
+    pointer-events: none; /* Los hijos sí capturan eventos */
   }
 
   #touch-controls.active {
     display: flex;
   }
 
+  #touch-controls > * {
+    pointer-events: auto;
+  }
+
+  /* Mostrar en dispositivos táctiles o pantallas pequeñas */
   @media (pointer: coarse), (max-width: 820px) {
     #touch-controls {
       display: flex;
@@ -164,111 +191,101 @@
     .controls-legend {
       display: none;
     }
-    #arcade-cabinet {
-      border-width: 3px;
-      border-radius: 8px;
-    }
   }
 
   /* Stick analógico virtual izquierdo */
   #stick-zone {
     position: relative;
-    width: 124px;
-    height: 124px;
+    width: 108px;
+    height: 108px;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #2a2a3d, #14141d);
-    border: 3px solid #444460;
-    box-shadow: inset 0 0 14px rgba(0, 0, 0, 0.85);
+    background: radial-gradient(circle at 35% 35%, rgba(42, 42, 61, 0.6), rgba(20, 20, 29, 0.6));
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.7);
     touch-action: none;
     flex-shrink: 0;
+    backdrop-filter: blur(1px);
+    opacity: 0.75;
   }
 
   #stick-knob {
     position: absolute;
-    width: 48px;
-    height: 48px;
-    left: 38px;
-    top: 38px;
+    width: 42px;
+    height: 42px;
+    left: 33px;
+    top: 33px;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #37d67a, #007a3d);
-    border: 3px solid var(--arcade-gold);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.65);
+    background: radial-gradient(circle at 35% 30%, rgba(55, 214, 122, 0.85), rgba(0, 122, 61, 0.85));
+    border: 2px solid rgba(255, 209, 0, 0.85);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.55);
     pointer-events: none;
+    opacity: 0.9;
   }
 
   .stick-hints {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    color: rgba(255, 255, 255, 0.25);
-    font-size: 9px;
+    color: rgba(255, 255, 255, 0.18);
+    font-size: 8px;
   }
   .stick-hints span { position: absolute; }
-  .h-u { top: 6px; left: 50%; transform: translateX(-50%); }
-  .h-d { bottom: 6px; left: 50%; transform: translateX(-50%); }
-  .h-l { left: 7px; top: 50%; transform: translateY(-50%); }
-  .h-r { right: 7px; top: 50%; transform: translateY(-50%); }
+  .h-u { top: 4px; left: 50%; transform: translateX(-50%); }
+  .h-d { bottom: 4px; left: 50%; transform: translateX(-50%); }
+  .h-l { left: 5px; top: 50%; transform: translateY(-50%); }
+  .h-r { right: 5px; top: 50%; transform: translateY(-50%); }
 
   /* Botones de acción a la derecha */
   .right-pad {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 8px;
+    gap: 6px;
   }
 
   .action-grid {
     display: grid;
-    grid-template-columns: repeat(2, 68px);
-    grid-template-rows: repeat(2, 56px);
-    gap: 8px;
+    grid-template-columns: repeat(2, 60px);
+    grid-template-rows: repeat(2, 50px);
+    gap: 6px;
   }
 
   .touch-btn {
-    background: linear-gradient(180deg, #343449 0%, #1e1e2c 100%);
-    border: 2px solid #7e7ea1;
-    border-radius: 12px;
+    background: rgba(52, 52, 73, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
     color: #fff;
     font-family: 'Press Start 2P', monospace;
-    font-size: 8.5px;
+    font-size: 7.5px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    line-height: 1.3;
-    box-shadow: 0 4px 0 #101018;
+    line-height: 1.25;
+    box-shadow: 0 2px 0 rgba(16, 16, 24, 0.7);
     touch-action: none;
     cursor: pointer;
+    backdrop-filter: blur(1px);
+    opacity: 0.78;
   }
 
   .touch-btn.pressed {
-    transform: translateY(3px);
-    box-shadow: 0 1px 0 #101018;
-    filter: brightness(1.25);
+    transform: translateY(2px);
+    box-shadow: 0 0 0 rgba(16, 16, 24, 0.7);
+    filter: brightness(1.3);
   }
 
-  .t-whip {
-    background: linear-gradient(180deg, #00b85c 0%, #006b34 100%);
-    border-color: #6effb2;
-  }
-  .t-throw {
-    background: linear-gradient(180deg, #f37021 0%, #ad4205 100%);
-    border-color: #ffd166;
-  }
-  .t-jump {
-    background: linear-gradient(180deg, #3a7bd5 0%, #1d437a 100%);
-    border-color: #90e0ef;
-  }
-  .t-fury {
-    background: linear-gradient(180deg, #e63946 0%, #8c141e 100%);
-    border-color: #ffd100;
-  }
+  .t-whip { background: rgba(0, 184, 92, 0.75); border-color: rgba(110, 255, 178, 0.8); }
+  .t-throw { background: rgba(243, 112, 33, 0.75); border-color: rgba(255, 209, 102, 0.8); }
+  .t-jump { background: rgba(58, 123, 213, 0.75); border-color: rgba(144, 224, 239, 0.8); }
+  .t-fury { background: rgba(230, 57, 70, 0.78); border-color: rgba(255, 209, 0, 0.9); }
+
   .t-swap {
-    width: 144px;
-    height: 34px;
-    font-size: 7.5px;
-    background: linear-gradient(180deg, #5a4e8c 0%, #372e5c 100%);
-    border-color: #ffd100;
+    width: 128px;
+    height: 30px;
+    font-size: 6.8px;
+    background: rgba(90, 78, 140, 0.7);
+    border-color: rgba(255, 209, 0, 0.85);
   }
 
   /* Modal Guía APK Android */
@@ -276,7 +293,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.88);
     z-index: 50;
     align-items: center;
     justify-content: center;
@@ -341,44 +358,46 @@
   <div id="arcade-cabinet">
     <canvas id="gameCanvas" width="480" height="270"></canvas>
     <div id="crt-overlay"></div>
-  </div>
 
-  <div id="ui-bar">
-    <div class="controls-legend">
-      <span class="key-badge">WASD/FLECHAS</span> Mover &nbsp;
-      <span class="key-badge">Z/J</span> Látigo Bolsa &nbsp;
-      <span class="key-badge">X/K</span> Lanzar/Golpe &nbsp;
-      <span class="key-badge">Q</span> Producto &nbsp;
-      <span class="key-badge">C/L</span> Saltar &nbsp;
-      <span class="key-badge">ESPACIO</span> ¡Cierre Caja!
-    </div>
-    <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-      <button id="btn-touch" class="btn-arcade">📱 MANDO: AUTO</button>
-      <button id="btn-audio" class="btn-arcade">🔊 SONIDO: ON</button>
-      <button id="btn-apk" class="btn-arcade btn-apk">🤖 GENERAR APK</button>
-      <button id="btn-restart" class="btn-arcade">🔄 REINICIAR</button>
-    </div>
-  </div>
-
-  <!-- Controles táctiles Android (Stick virtual + Botones de acción) -->
-  <div id="touch-controls">
-    <div id="stick-zone">
-      <div class="stick-hints">
-        <span class="h-u">▲</span>
-        <span class="h-d">▼</span>
-        <span class="h-l">◀</span>
-        <span class="h-r">▶</span>
+    <!-- Controles táctiles flotantes SOBRE el juego -->
+    <div id="touch-controls" class="active">
+      <div id="stick-zone">
+        <div class="stick-hints">
+          <span class="h-u">▲</span>
+          <span class="h-d">▼</span>
+          <span class="h-l">◀</span>
+          <span class="h-r">▶</span>
+        </div>
+        <div id="stick-knob"></div>
       </div>
-      <div id="stick-knob"></div>
+
+      <div class="right-pad">
+        <button class="touch-btn t-swap" id="btn-touch-swap">🛒 CAMBIAR [Q]</button>
+        <div class="action-grid">
+          <button class="touch-btn t-whip" data-action="whip">BOLSA<br>[Z]</button>
+          <button class="touch-btn t-throw" data-action="throw">LANZAR<br>[X]</button>
+          <button class="touch-btn t-jump" data-action="jump">SALTAR<br>[C]</button>
+          <button class="touch-btn t-fury" data-action="special">¡CAJA!<br>[SPC]</button>
+        </div>
+      </div>
     </div>
 
-    <div class="right-pad">
-      <button class="touch-btn t-swap" id="btn-touch-swap">🛒 CAMBIAR PRODUCTO [Q]</button>
-      <div class="action-grid">
-        <button class="touch-btn t-whip" data-action="whip">BOLSA<br>[Z]</button>
-        <button class="touch-btn t-throw" data-action="throw">LANZAR<br>[X]</button>
-        <button class="touch-btn t-jump" data-action="jump">SALTAR<br>[C]</button>
-        <button class="touch-btn t-fury" data-action="special">¡CAJA!<br>[SPC]</button>
+    <!-- Barra de UI superior flotante -->
+    <div id="ui-bar">
+      <div class="controls-legend">
+        <span class="key-badge">WASD/FLECHAS</span> Mover &nbsp;
+        <span class="key-badge">Z/J</span> Látigo Bolsa &nbsp;
+        <span class="key-badge">X/K</span> Lanzar/Golpe &nbsp;
+        <span class="key-badge">Q</span> Producto &nbsp;
+        <span class="key-badge">C/L</span> Saltar &nbsp;
+        <span class="key-badge">ESPACIO</span> ¡Cierre Caja!
+      </div>
+      <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
+        <button id="btn-fullscreen" class="btn-arcade">⛶ PANTALLA COMPLETA</button>
+        <button id="btn-touch" class="btn-arcade">📱 MANDO: ON</button>
+        <button id="btn-audio" class="btn-arcade">🔊 SONIDO: ON</button>
+        <button id="btn-apk" class="btn-arcade btn-apk">🤖 APK</button>
+        <button id="btn-restart" class="btn-arcade">🔄 REINICIAR</button>
       </div>
     </div>
   </div>
@@ -697,18 +716,15 @@ function drawComicBox(x, y, w, h, fill, ink = '#09090f', border = 2) {
 // ============================================================================
 function drawBackground(theme, camX, timeTick) {
   if (theme === 'mercadona') {
-    // Capa 0: Fondo de supermercado iluminado por fluorescentes
     drawPixelRect(0, 0, WIDTH, FLOOR_TOP, '#dce6e0');
     drawPixelRect(0, 0, WIDTH, 24, '#6c757d');
     for (let x = -(camX * 0.25) % 120; x < WIDTH; x += 120) {
       drawPixelRect(x + 18, 9, 76, 6, '#ffffff');
       drawPixelRect(x + 16, 15, 80, 3, '#90e0ef');
-      // Cadenas colgantes de luces
       drawPixelRect(x + 32, 0, 2, 9, '#343a40');
       drawPixelRect(x + 76, 0, 2, 9, '#343a40');
     }
 
-    // Capa 1: Pasillos lejanos y carteles de secciones
     for (let x = -(camX * 0.5) % 200; x < WIDTH; x += 200) {
       drawPixelRect(x + 20, 26, 70, 14, '#0077b6');
       ctx.fillStyle = '#ffd100';
@@ -716,10 +732,8 @@ function drawBackground(theme, camX, timeTick) {
       ctx.fillText('CONGELADOS', x + 24, 35);
     }
 
-    // Capa 2: Estanterías detalladas con reborde de tinta y productos
     for (let x = -(camX * 0.85) % 190; x < WIDTH; x += 190) {
       drawComicBox(x + 10, 42, 140, 104, '#2b2d42', '#09090f', 2);
-      // Sombras internas en baldas
       for (let row = 0; row < 4; row++) {
         const sy = 56 + row * 22;
         drawPixelRect(x + 12, sy + 14, 136, 3, '#adb5bd');
@@ -731,14 +745,12 @@ function drawBackground(theme, camX, timeTick) {
           drawPixelRect(px + 2, sy + 5, 3, 4, 'rgba(255,255,255,0.45)');
         }
       }
-      // Cartel amarillo chillón "¡REBAJÓN '89!"
       drawComicBox(x + 42, 30, 74, 15, '#ffd100', '#09090f', 2);
       ctx.fillStyle = '#d62828';
       ctx.font = '6px "Press Start 2P"';
       ctx.fillText('OFERTON 89', x + 46, 40);
     }
 
-    // Suelo de terrazo con reflejos y manchas de aceite
     drawPixelRect(0, FLOOR_TOP, WIDTH, HEIGHT - FLOOR_TOP, '#ced4da');
     for (let gx = -(camX) % 32; gx < WIDTH; gx += 32) {
       drawPixelRect(gx, FLOOR_TOP, 1, HEIGHT - FLOOR_TOP, '#adb5bd');
@@ -751,7 +763,6 @@ function drawBackground(theme, camX, timeTick) {
     }
   }
   else if (theme === 'park') {
-    // Capa 0: Cielo ochentero con nubes pixeladas
     drawPixelRect(0, 0, WIDTH, 70, '#4ea8de');
     drawPixelRect(0, 70, WIDTH, FLOOR_TOP - 70, '#90e0ef');
     for (let x = -(camX * 0.2) % 180; x < WIDTH; x += 180) {
@@ -759,40 +770,33 @@ function drawBackground(theme, camX, timeTick) {
       drawPixelRect(x + 35, 16, 28, 8, '#ffffff');
     }
 
-    // Capa 1: Bloques de ladrillo visto con antenas TV y ropa tendida
     for (let x = -(camX * 0.45) % 165; x < WIDTH; x += 165) {
       drawComicBox(x + 12, 26, 102, 120, '#9e2a2b', '#1a0c0c', 2);
-      // Antena de TV en tejado
       drawPixelRect(x + 58, 12, 2, 14, '#222');
       drawPixelRect(x + 48, 15, 22, 2, '#ccc');
       for (let wy = 36; wy < 124; wy += 24) {
         for (let wx = 22; wx < 96; wx += 24) {
           drawComicBox(x + wx, wy, 14, 15, '#2b2d42', '#111', 1);
           drawPixelRect(x + wx + 2, wy + 2, 10, 11, '#f4d35e');
-          // Persiana bajada a medias
           drawPixelRect(x + wx + 2, wy + 2, 10, 4, '#6c757d');
         }
       }
     }
 
-    // Capa 2: Árboles frondosos, bancos de madera, tableros de petanca y papeleras
     for (let x = -(camX * 0.88) % 220; x < WIDTH; x += 220) {
       drawComicBox(x + 32, 78, 14, 68, '#582f0e', '#1a0f05', 2);
       drawComicBox(x + 10, 36, 58, 46, '#2d6a4f', '#081c15', 2);
       drawPixelRect(x + 18, 28, 42, 18, '#52b788');
-      // Banco de madera de parque
       drawComicBox(x + 102, 122, 56, 6, '#bc6c25', '#1a0f05', 1);
       drawComicBox(x + 102, 132, 56, 6, '#dda15e', '#1a0f05', 1);
       drawPixelRect(x + 108, 122, 4, 24, '#283618');
       drawPixelRect(x + 148, 122, 4, 24, '#283618');
-      // Papelera verde con pintada gamberra
       drawComicBox(x + 172, 122, 16, 22, '#007f5f', '#081c15', 2);
       ctx.fillStyle = '#ffd100';
       ctx.font = '5px "Press Start 2P"';
       ctx.fillText('PUNK', x + 173, 134);
     }
 
-    // Suelo de albero con bolitas de petanca
     drawPixelRect(0, FLOOR_TOP, WIDTH, HEIGHT - FLOOR_TOP, '#dda15e');
     for (let i = 0; i < 42; i++) {
       const px = ((i * 73 - camX) % WIDTH + WIDTH) % WIDTH;
@@ -803,7 +807,6 @@ function drawBackground(theme, camX, timeTick) {
   else if (theme === 'bar_street') {
     drawPixelRect(0, 0, WIDTH, FLOOR_TOP, '#3d405b');
     for (let x = -(camX * 0.88) % 330; x < WIDTH; x += 330) {
-      // BAR PACO con toldo rayado, jamón colgado y tele CRT en ventana
       drawComicBox(x + 8, 24, 152, 122, '#f2e8cf', '#0d0d12', 2);
       for (let s = 0; s < 10; s++) {
         drawPixelRect(x + 6 + s * 15, 70, 15, 18, s % 2 === 0 ? '#d62828' : '#ffffff');
@@ -813,17 +816,14 @@ function drawBackground(theme, camX, timeTick) {
       ctx.font = '8px "Press Start 2P"';
       ctx.fillText('BAR PACO', x + 40, 52);
 
-      // Tele CRT ochentera en escaparate mostrando fútbol/nieve
       drawComicBox(x + 22, 92, 24, 18, '#2b2d42', '#09090f', 2);
       drawPixelRect(x + 25, 95, 15, 12, timeTick % 6 < 3 ? '#4cc9f0' : '#a8dadc');
       drawPixelRect(x + 41, 97, 3, 3, '#e63946');
 
-      // Barril de cerveza y puerta con cristal
       drawComicBox(x + 56, 114, 24, 32, '#6f4518', '#111', 2);
       drawComicBox(x + 98, 104, 28, 42, '#8d5524', '#111', 2);
       drawPixelRect(x + 103, 110, 18, 14, '#caf0f8');
 
-      // VIDEOCLUB VHS 89 con neón rosa y carátulas
       drawComicBox(x + 168, 24, 150, 122, '#1f1b2e', '#09090f', 2);
       drawComicBox(x + 180, 38, 126, 18, '#f72585', '#09090f', 2);
       ctx.fillStyle = '#00f5d4';
@@ -837,7 +837,6 @@ function drawBackground(theme, camX, timeTick) {
       }
     }
 
-    // Acera con bordillo y asfalto
     drawPixelRect(0, FLOOR_TOP, WIDTH, 24, '#adb5bd');
     drawPixelRect(0, FLOOR_TOP + 22, WIDTH, 3, '#6c757d');
     drawPixelRect(0, FLOOR_TOP + 25, WIDTH, HEIGHT - FLOOR_TOP - 25, '#2b2d42');
@@ -849,7 +848,6 @@ function drawBackground(theme, camX, timeTick) {
     drawPixelRect(0, 0, WIDTH, FLOOR_TOP, '#72efdd');
     drawPixelRect(0, 50, WIDTH, FLOOR_TOP - 50, '#caf0f8');
 
-    // Capa 1: Campanario de iglesia y casas de pueblo
     for (let x = -(camX * 0.4) % 290; x < WIDTH; x += 290) {
       drawComicBox(x + 36, 18, 52, 128, '#e6ccb2', '#1c140d', 2);
       drawComicBox(x + 48, 6, 28, 14, '#b08968', '#1c140d', 2);
@@ -858,22 +856,18 @@ function drawBackground(theme, camX, timeTick) {
       drawComicBox(x + 106, 48, 128, 98, '#ede0d4', '#1c140d', 2);
     }
 
-    // Capa 2: Cabina Telefónica azul, Quiosco de revistas y Seat 127 rojo
     for (let x = -(camX * 0.9) % 350; x < WIDTH; x += 350) {
-      // Cabina Telefónica
       drawComicBox(x + 42, 74, 32, 72, '#0077b6', '#041e2e', 2);
       drawComicBox(x + 46, 84, 24, 42, '#caf0f8', '#041e2e', 1);
       drawPixelRect(x + 53, 98, 9, 12, '#1d3557');
       drawPixelRect(x + 55, 112, 5, 8, '#111');
 
-      // Quiosco de prensa con revistas y cómics
       drawComicBox(x + 136, 68, 82, 78, '#1b4332', '#081c15', 2);
       drawComicBox(x + 130, 58, 94, 11, '#2d6a4f', '#081c15', 2);
       for (let r = 0; r < 4; r++) {
         drawComicBox(x + 144 + r * 17, 84, 13, 17, r % 2 === 0 ? '#ffbe0b' : '#fb5607', '#111', 1);
       }
 
-      // Seat 127 rojo con matrícula de época
       drawComicBox(x + 245, 114, 78, 24, '#d90429', '#111', 2);
       drawComicBox(x + 258, 99, 46, 16, '#d90429', '#111', 2);
       drawPixelRect(x + 262, 102, 17, 11, '#90e0ef');
@@ -882,7 +876,6 @@ function drawBackground(theme, camX, timeTick) {
       drawComicBox(x + 298, 132, 15, 14, '#111', '#000', 1);
     }
 
-    // Adoquinado de plaza
     drawPixelRect(0, FLOOR_TOP, WIDTH, HEIGHT - FLOOR_TOP, '#8d99ae');
     for (let gy = FLOOR_TOP; gy < HEIGHT; gy += 14) {
       for (let gx = -(camX) % 24; gx < WIDTH; gx += 24) {
@@ -893,7 +886,6 @@ function drawBackground(theme, camX, timeTick) {
   else if (theme === 'market') {
     drawPixelRect(0, 0, WIDTH, FLOOR_TOP, '#2b2d42');
     for (let x = -(camX * 0.88) % 250; x < WIDTH; x += 250) {
-      // Puesto Casquería grotesco con ganchos, jamones y despojos
       drawComicBox(x + 10, 32, 108, 114, '#f4f1de', '#09090f', 2);
       drawComicBox(x + 10, 32, 108, 18, '#9e2a2b', '#09090f', 2);
       ctx.fillStyle = '#fff';
@@ -907,7 +899,6 @@ function drawBackground(theme, camX, timeTick) {
       drawComicBox(x + 26, 98, 18, 13, '#ffb5a7', '#2b0707', 1);
       drawComicBox(x + 68, 98, 18, 13, '#ffb5a7', '#2b0707', 1);
 
-      // Puesto Pescadería con hielo y raspas
       drawComicBox(x + 128, 32, 108, 114, '#caf0f8', '#09090f', 2);
       drawComicBox(x + 128, 32, 108, 18, '#0077b6', '#09090f', 2);
       ctx.fillStyle = '#fff';
@@ -915,7 +906,6 @@ function drawBackground(theme, camX, timeTick) {
       drawComicBox(x + 128, 110, 108, 36, '#48cae4', '#09090f', 2);
     }
 
-    // Suelo mojado con charcos rojizos y verdosos
     drawPixelRect(0, FLOOR_TOP, WIDTH, HEIGHT - FLOOR_TOP, '#5c677d');
     for (let x = -(camX) % 160; x < WIDTH; x += 160) {
       drawPixelRect(x + 28, FLOOR_TOP + 34, 48, 12, '#7f1d1d');
@@ -923,35 +913,29 @@ function drawBackground(theme, camX, timeTick) {
     }
   }
   else {
-    // NIVEL 6: EL MATADERO DEL INSERSO (GROTESCO INDUSTRIAL '89)
     drawPixelRect(0, 0, WIDTH, 64, '#231426');
     drawPixelRect(0, 64, WIDTH, FLOOR_TOP - 64, '#47253b');
 
     for (let x = -(camX * 0.45) % 270; x < WIDTH; x += 270) {
       drawComicBox(x + 18, 28, 90, 118, '#1a1421', '#050508', 2);
-      // Ganchos industriales colgantes en la nave
       drawPixelRect(x + 42, 28, 2, 24, '#adb5bd');
       drawComicBox(x + 36, 52, 14, 24, '#9e2a2b', '#050508', 1);
       drawComicBox(x + 132, 52, 104, 94, '#261d2e', '#050508', 2);
     }
 
     for (let x = -(camX * 0.9) % 230; x < WIDTH; x += 230) {
-      // Bidón ardiendo con llamas animadas
       drawComicBox(x + 38, 114, 22, 32, '#6c757d', '#09090f', 2);
       const flameH = 10 + (timeTick % 6);
       drawPixelRect(x + 41, 114 - flameH, 16, flameH, '#f77f00');
       drawPixelRect(x + 44, 110 - Math.floor(flameH * 0.7), 10, Math.floor(flameH * 0.7), '#fcbf49');
 
-      // Cuba / caldero grotesco burbujeante
       drawComicBox(x + 86, 122, 30, 24, '#343a40', '#09090f', 2);
       drawPixelRect(x + 90, 118 - (timeTick % 4), 22, 5, '#70e000');
 
-      // Neumáticos apilados
       drawComicBox(x + 140, 132, 36, 8, '#111', '#000', 1);
       drawComicBox(x + 143, 124, 30, 8, '#222', '#000', 1);
     }
 
-    // Suelo de tierra grotesca con jeringuillas y chatarra
     drawPixelRect(0, FLOOR_TOP, WIDTH, HEIGHT - FLOOR_TOP, '#3d342b');
     for (let i = 0; i < 36; i++) {
       const sx = ((i * 97 - camX) % WIDTH + WIDTH) % WIDTH;
@@ -1193,7 +1177,6 @@ class Player {
     const sy = Math.floor(this.y - this.z);
     const shadowScale = Math.max(0.45, 1 - this.z / 90);
 
-    // Sombra dinámica en el suelo
     ctx.fillStyle = 'rgba(0,0,0,0.48)';
     ctx.beginPath();
     ctx.ellipse(sx, Math.floor(this.y), 14 * shadowScale, 5 * shadowScale, 0, 0, Math.PI * 2);
@@ -1205,31 +1188,26 @@ class Player {
 
     const walkBob = this.state === 'WALK' ? Math.sin(this.animFrame * 2) * 2 : 0;
 
-    // Zapatillas blancas con franja roja y suela de tinta
     drawComicBox(-9, -6 + walkBob, 7, 5, '#f8f9fa', '#09090f', 1);
     drawPixelRect(-8, -3 + walkBob, 5, 2, '#d62828');
     drawComicBox(2, -6 - walkBob, 7, 5, '#f8f9fa', '#09090f', 1);
     drawPixelRect(3, -3 - walkBob, 5, 2, '#d62828');
 
-    // Pantalón chándal azul marino con raya blanca
     drawComicBox(-7, -20, 6, 14, '#1d3557', '#09090f', 1);
     drawComicBox(1, -20, 6, 14, '#1d3557', '#09090f', 1);
     drawPixelRect(-6, -20, 1, 14, '#ffffff');
     drawPixelRect(2, -20, 1, 14, '#ffffff');
 
-    // Chaqueta chándal ochentera tricapa (blanco / rojo / verde azulado)
     drawComicBox(-9, -36, 18, 17, '#f1faee', '#09090f', 2);
     drawPixelRect(-8, -30, 16, 5, '#e63946');
     drawPixelRect(-8, -25, 16, 4, '#2a9d8f');
 
-    // Cabeza con pelo mullet ochentero y bigote
     drawComicBox(-6, -48, 12, 12, '#ffcdb2', '#09090f', 1);
     drawComicBox(-8, -51, 15, 5, '#4a2c2a', '#09090f', 1);
-    drawPixelRect(-8, -46, 4, 8, '#3d1e1d'); // Mullet
+    drawPixelRect(-8, -46, 4, 8, '#3d1e1d');
     drawPixelRect(2, -44, 3, 2, '#111');
     drawPixelRect(1, -40, 6, 2, '#3d1e1d');
 
-    // BOLSA DE MERCADONA (Verde y Naranja icónica)
     if (this.state === 'ATTACK') {
       if (this.comboStep === 4) {
         const angle = this.stateTimer * 0.85;
@@ -2092,8 +2070,8 @@ function updateStickFromPoint(clientX, clientY) {
 
 function resetStick() {
   activeStickTouchId = null;
-  stickKnob.style.left = '38px';
-  stickKnob.style.top = '38px';
+  stickKnob.style.left = '33px';
+  stickKnob.style.top = '33px';
   game.keys['ArrowLeft'] = false;
   game.keys['ArrowRight'] = false;
   game.keys['ArrowUp'] = false;
@@ -2151,12 +2129,10 @@ document.getElementById('btn-touch-swap').addEventListener('touchstart', (e) => 
 
 // Controles de barra superior y modal APK
 const touchControlsEl = document.getElementById('touch-controls');
-let forcedTouch = false;
 
 document.getElementById('btn-touch').addEventListener('click', (e) => {
-  forcedTouch = !forcedTouch;
-  touchControlsEl.classList.toggle('active', forcedTouch);
-  e.target.textContent = forcedTouch ? '📱 MANDO: ON' : '📱 MANDO: AUTO';
+  const isActive = touchControlsEl.classList.toggle('active');
+  e.target.textContent = isActive ? '📱 MANDO: ON' : '📱 MANDO: OFF';
 });
 
 document.getElementById('btn-audio').addEventListener('click', (e) => {
@@ -2168,6 +2144,43 @@ document.getElementById('btn-restart').addEventListener('click', () => {
   sound.init();
   game.startNewGame();
 });
+
+// Pantalla completa + ocultar barras de Android
+const btnFullscreen = document.getElementById('btn-fullscreen');
+btnFullscreen.addEventListener('click', async () => {
+  try {
+    const el = document.documentElement;
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (el.requestFullscreen) {
+        await el.requestFullscreen();
+      } else if (el.webkitRequestFullscreen) {
+        await el.webkitRequestFullscreen();
+      }
+      // Intento de ocultar barras del sistema en Android (si el navegador lo permite)
+      if (navigator.userAgent.match(/Android/i) && screen.orientation && screen.orientation.lock) {
+        try { await screen.orientation.lock('landscape'); } catch (err) {}
+      }
+    } else {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        await document.webkitExitFullscreen();
+      }
+    }
+  } catch (err) {
+    console.warn('Pantalla completa no disponible:', err);
+  }
+});
+
+// Al entrar en pantalla completa, ajustar canvas
+function resizeCanvasDisplay() {
+  // El CSS ya hace que el canvas ocupe el 100% manteniendo proporción con object-fit: contain
+  // No se necesita cambiar el tamaño interno del canvas (480x270) para no perder pixel art
+}
+
+window.addEventListener('resize', resizeCanvasDisplay);
+document.addEventListener('fullscreenchange', resizeCanvasDisplay);
+document.addEventListener('webkitfullscreenchange', resizeCanvasDisplay);
 
 const apkModal = document.getElementById('apk-modal');
 document.getElementById('btn-apk').addEventListener('click', () => {
